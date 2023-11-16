@@ -1,0 +1,72 @@
+# Install necessary libraries
+# pip install openpyxl requests
+
+import openpyxl
+import requests
+
+def get_github_data(owner, repo):
+    # GitHub API endpoint for repository information
+    url = f'https://api.github.com/repos/{owner}/{repo}'
+
+    # Make a GET request to the GitHub API
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        # Parse the JSON response
+        data = response.json()
+
+        # Extract relevant information
+        repo_name = data['name']
+        description = data['description']
+        stargazers_count = data['stargazers_count']
+        forks_count = data['forks_count']
+
+        return {
+            'Repo Name': repo_name,
+            'Description': description,
+            'Stargazers Count': stargazers_count,
+            'Forks Count': forks_count,
+        }
+    else:
+        # Handle API error
+        print(f'Error: {response.status_code}')
+        return None
+
+def update_excel_sheet(file_path, data):
+    # Load the Excel workbook
+    workbook = openpyxl.load_workbook(file_path)
+
+    # Select the active sheet
+    sheet = workbook.active
+
+    # Add headers if the sheet is empty
+    if sheet.max_row == 1:
+        headers = list(data.keys())
+        for col_num, header in enumerate(headers, start=1):
+            sheet.cell(row=1, column=col_num, value=header)
+
+    # Add data to the next available row
+    next_row = sheet.max_row + 1
+    for col_num, value in enumerate(data.values(), start=1):
+        sheet.cell(row=next_row, column=col_num, value=value)
+
+    # Save the changes
+    workbook.save(file_path)
+
+if __name__ == "__main__":
+    # GitHub repository information
+    owner = 'your_username'
+    repo = 'your_repository'
+
+    # Excel file path
+    excel_file_path = 'github_data.xlsx'
+
+    # Get GitHub data
+    github_data = get_github_data(owner, repo)
+
+    if github_data:
+        # Update the Excel sheet with GitHub data
+        update_excel_sheet(excel_file_path, github_data)
+        print('Excel sheet updated successfully.')
+    else:
+        print('Failed to fetch GitHub data.')
